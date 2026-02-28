@@ -28,38 +28,37 @@ app.get('/download', (req, res) => {
     // We intentionally DO NOT set Content-Length to force 'Transfer-Encoding: chunked'
     res.header('Content-Type', 'application/octet-stream');
 
-    const sizeQuery = parseInt(req.query.size, 10);
-    // Let's stream a large amount ideally if no size is specified, e.g 100MB
-    const sizeMB = isNaN(sizeQuery) ? 100 : Math.min(Math.max(sizeQuery, 1), 1000);
-    const sizeBytes = sizeMB * 1024 * 1024;
-
     const chunkSize = 1024 * 64; // 64K chunks
     const dummyBuffer = Buffer.alloc(chunkSize, '0'); // Sending zeros is fine, network doesn't compress automatically here as we don't use compression middleware
 
-    let bytesSent = 0;
+    const maxDuration = 15000; // 15 second maximum timeout as a safety fallback
+    const startTime = Date.now();
 
     const streamData = () => {
         let ok = true;
-        // Only write as long as the internal buffer is not full ('ok' flag) 
-        // This naturally throttles to the client's actual TCP window / download speed
-        while (ok && bytesSent < sizeBytes) {
-            const toSend = Math.min(chunkSize, sizeBytes - bytesSent);
-            ok = res.write(dummyBuffer.slice(0, toSend));
-            bytesSent += toSend;
+
+        // Write chunks into the socket buffer only if there is room ('ok' flag)
+        // This throttles specifically dynamically to network line capacity
+        while (ok && !res.socket.destroyed && (Date.now() - startTime) < maxDuration) {
+            ok = res.write(dummyBuffer);
         }
 
-        if (bytesSent >= sizeBytes) {
+        if (res.socket.destroyed || (Date.now() - startTime) >= maxDuration) {
             res.end();
             return;
         }
 
-        // If buffer is full, wait for it to drain before writing more (CRITICAL for real speed testing instead of RAM dumping)
+        // If buffer is full, wait for it to drain before continuing to dump data into memory
         if (!ok) {
             res.once('drain', streamData);
         }
     };
 
     streamData();
+
+    req.on('close', () => {
+        res.end();
+    });
 });
 
 // POST /upload - Accept uploaded data and consume it
