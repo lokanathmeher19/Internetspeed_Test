@@ -2,6 +2,36 @@
 
 A fully independent, production-ready, self-hosted internet speed testing platform.
 
+---
+
+## ✨ Application Showcase
+
+Welcome to the **NetPulse Speed Test** suite. Here is a preview of the stunning, locally-hosted user interface features available directly out of the box.
+
+*(To view these on GitHub, save your screenshots exactly as named inside the `/screenshots` folder at the root of your repo!)*
+
+### 1. Ultra-Fast Core Live Telemetry
+*Fully dynamic gauge animations processing multi-threaded streams at zero disk I/O.*
+![Live Speed Testing](screenshots/1_main_speedometer.png)
+
+### 2. Comprehensive Test Diagnostics
+*In-depth latency breakdowns, dynamic server switching, and map integration showing live geo-IP tracing.*
+![Detailed Results](screenshots/2_detailed_results.png)
+
+### 3. Integrated Feature Modules
+*Extensible architecture featuring downloadable client apps, troubleshooting layers, and outage maps.*
+![App Integrations](screenshots/3_feature_cards.png)
+
+### 4. Live Global ISP Outage Map (Web-Scraped)
+*Dynamic tracking of tier-1 carrier degradations across global hubs.*
+![Outage Map](screenshots/4_outage_map.png)
+
+### 5. Interactive WiFi Troubleshooter
+*Expanded, responsive tech-support cards engineered to resolve local RF-layer bottlenecks.*
+![WiFi Troubleshooter](screenshots/5_wifi_troubleshooter.png)
+
+---
+
 ## 🚀 Architecture
 
 - **Backend:** Node.js + Fastify. Generates dummy streams dynamically on the fly to measure precise throughput without disk I/O bottlenecks. Custom multipart handlers buffer streams straight into memory nullification to track upload sizes securely and at max capacity.

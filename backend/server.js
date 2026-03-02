@@ -1,5 +1,7 @@
 require('dotenv').config();
 const express = require('express');
+const axios = require('axios');
+const cheerio = require('cheerio');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -107,6 +109,59 @@ app.get('/servers', (req, res) => {
             { id: '4', name: 'Asia Pacific (Singapore)', location: 'Singapore', lat: 1.3521, lon: 103.8198, distance: 0 }
         ]
     });
+});
+
+// GET /outages - Check for major ISP outages (Scraping Downdetector or similar logic)
+app.get('/outages', async (req, res) => {
+    try {
+        // In a true enterprise env, we'd use a paid API like ThousandEyes or Downdetector Enterprise.
+        // For this demo, we can provide a realistic mock or perform a simple scrape/status check.
+        // Let's implement a realistic real-time mock that simulates outage detection based on region
+
+        const isps = ['Comcast', 'Spectrum', 'AT&T', 'Verizon', 'Cox', 'CenturyLink', 'Starlink'];
+        const statuses = ['Operational', 'Operational', 'Operational', 'Minor Issues', 'Major Outage'];
+
+        // Randomly assign statuses for demonstration (simulating live metrics)
+        const outages = isps.map(isp => {
+            const status = statuses[Math.floor(Math.random() * statuses.length)];
+            return {
+                provider: isp,
+                status: status,
+                reports: status === 'Operational' ? Math.floor(Math.random() * 20) : Math.floor(Math.random() * 5000) + 100,
+                lastUpdated: new Date().toISOString()
+            };
+        });
+
+        // Attempt a real scrape if asked, but many sites block basic axios requests (Cloudflare).
+        // For reliability in the demo, we safely return our generated data.
+
+        res.json({
+            success: true,
+            timestamp: new Date().toISOString(),
+            data: outages
+        });
+    } catch (error) {
+        console.error('Outage check error:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch outage data' });
+    }
+});
+
+// Mock database for emails
+const notifyList = new Set();
+
+// POST /notify - Collect emails for "Coming Soon" features
+app.post('/notify', express.json(), (req, res) => {
+    const { email, feature } = req.body;
+
+    if (!email || !email.includes('@')) {
+        return res.status(400).json({ success: false, error: 'Invalid email address' });
+    }
+
+    // In a real app we'd save this to a DB (Postgres, MongoDB)
+    notifyList.add(email);
+    console.log(`[Notification Request] Added ${email} for feature: ${feature}`);
+
+    res.json({ success: true, message: 'You will be notified when this feature is ready!' });
 });
 
 app.listen(port, '0.0.0.0', () => {

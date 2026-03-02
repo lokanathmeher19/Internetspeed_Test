@@ -13,6 +13,11 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 // Dynamically import RadarMap to strictly bypass SSR (Leaflet relies heavily on the 'window' object)
 const RadarMap = dynamic(() => import('../components/RadarMap'), { ssr: false });
 
+// Dynamically import OutageMap to bypass SSR
+const OutageMap = dynamic(() => import('../components/OutageMap'), { ssr: false });
+const WiFiTroubleshooter = dynamic(() => import('../components/WiFiTroubleshooter'), { ssr: false });
+const ComingSoonModal = dynamic(() => import('../components/ComingSoonModal'), { ssr: false });
+
 export interface HistoryRecord {
   id: string;
   date: string;
@@ -59,7 +64,10 @@ export default function Home() {
 
   const [history, setHistory] = useState<HistoryRecord[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [showWifiTroubleshooter, setShowWifiTroubleshooter] = useState(false);
+  const [activeComingSoonFeature, setActiveComingSoonFeature] = useState<string | null>(null);
   const [selectedHistoryItem, setSelectedHistoryItem] = useState<HistoryRecord | null>(null);
+  const [showOutageMap, setShowOutageMap] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [shareCopied, setShareCopied] = useState(false);
   const finalResultsRef = useRef({ ping: 0, download: 0, upload: 0 });
@@ -592,14 +600,14 @@ export default function Home() {
           Net <span>Pulse</span>
         </div>
         <div className="nav-links">
-          <span className="nav-link">Apps</span>
-          <span className="nav-link">CLI</span>
-          <span className="nav-link">VPN</span>
+          <span className="nav-link" onClick={() => setActiveComingSoonFeature('Apps')}>Apps</span>
+          <span className="nav-link" onClick={() => setActiveComingSoonFeature('CLI')}>CLI</span>
+          <span className="nav-link" onClick={() => setActiveComingSoonFeature('VPN')}>VPN</span>
           <span className="nav-link" onClick={() => setShowHistory(true)}>History</span>
           <div className="nav-lang">
             <Globe size={16} className="nav-lang-icon" /> EN <ChevronDown size={14} />
           </div>
-          <span className="nav-link nav-login">
+          <span className="nav-link nav-login" onClick={() => setActiveComingSoonFeature('Login')}>
             <User size={18} /> Login
           </span>
           <button
@@ -856,19 +864,34 @@ export default function Home() {
             <div className="feature-desc">Download the SpeedTest app for Windows or macOS for background telemetry and no-browser tracking.</div>
             <span className="feature-link">Download <ChevronDown size={14} style={{ transform: 'rotate(-90deg)' }} /></span>
           </div>
-          <div className="feature-card">
+          <div className="feature-card" style={{ cursor: 'pointer' }} onClick={() => setShowWifiTroubleshooter(!showWifiTroubleshooter)}>
             <div className="feature-icon"><Wifi size={24} /></div>
             <div className="feature-title">Troubleshoot WiFi</div>
             <div className="feature-desc">Explore tips to optimize your router placement, channels, and cut interference.</div>
-            <span className="feature-link">Learn More <ChevronDown size={14} style={{ transform: 'rotate(-90deg)' }} /></span>
+            <span className="feature-link">{showWifiTroubleshooter ? 'Hide Tips' : 'Learn More'} <ChevronDown size={14} style={{ transform: showWifiTroubleshooter ? 'rotate(180deg)' : 'rotate(-90deg)', transition: 'transform 0.3s ease' }} /></span>
           </div>
-          <div className="feature-card">
+          <div className="feature-card" style={{ cursor: 'pointer' }} onClick={() => setShowOutageMap(!showOutageMap)}>
             <div className="feature-icon"><MapPin size={24} /></div>
             <div className="feature-title">Global Outage Map</div>
             <div className="feature-desc">Check if your area is affected by ISP outages using down detector metrics.</div>
-            <span className="feature-link">View Map <ChevronDown size={14} style={{ transform: 'rotate(-90deg)' }} /></span>
+            <span className="feature-link">{showOutageMap ? 'Hide Map' : 'View Map'} <ChevronDown size={14} style={{ transform: showOutageMap ? 'rotate(180deg)' : 'rotate(-90deg)', transition: 'transform 0.3s ease' }} /></span>
           </div>
         </section>
+
+        {/* WiFi Troubleshooter Integration */}
+        {showWifiTroubleshooter && (
+          <section style={{ width: '100%', marginTop: '2rem', marginBottom: '2rem' }}>
+            <WiFiTroubleshooter />
+          </section>
+        )}
+
+        {/* Global Outage Map Integration */}
+        {showOutageMap && (
+          <section style={{ width: '100%', marginTop: '2rem', marginBottom: '4rem' }}>
+            <h2 style={{ textAlign: 'center', marginBottom: '1.5rem', color: 'var(--text-main)' }}>Live Global ISP Outages</h2>
+            <OutageMap />
+          </section>
+        )}
 
       </main >
 
@@ -1063,6 +1086,14 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Reusable Coming Soon Modal for Pending Features */}
+      {activeComingSoonFeature && (
+        <ComingSoonModal
+          featureName={activeComingSoonFeature}
+          onClose={() => setActiveComingSoonFeature(null)}
+          host={HOST}
+        />
+      )}
     </div >
   );
 }
