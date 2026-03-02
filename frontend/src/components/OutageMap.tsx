@@ -11,7 +11,7 @@ interface OutageData {
     status: string;
     reports: number;
     lastUpdated: string;
-}
+} 
 
 const OutageMap = () => {
     const [outages, setOutages] = useState<OutageData[]>([]);
