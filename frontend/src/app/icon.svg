@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="background:transparent;">
+  <defs>
+    <linearGradient id="neonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f2fe" />
+      <stop offset="100%" stop-color="#4facfe" />
+    </linearGradient>
+    <linearGradient id="needleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00f2fe" />
+      <stop offset="100%" stop-color="#ab47bc" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Arc Background -->
+  <path d="M 90 380 A 210 210 0 1 1 422 380" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="28" stroke-linecap="round" />
+  
+  <!-- Active Arc Segment -->
+  <path d="M 90 380 A 210 210 0 0 1 256 70" fill="none" stroke="url(#neonGradient)" stroke-width="28" stroke-linecap="round" filter="url(#glow)"/>
+
+  <!-- Needle Base -->
+  <circle cx="256" cy="280" r="30" fill="#151928" stroke="#ffffff" stroke-width="6" />
+
+  <!-- Needle Line -->
+  <line x1="256" y1="280" x2="140" y2="120" stroke="url(#needleGradient)" stroke-width="12" stroke-linecap="round" filter="url(#glow)"/>
+
+  <!-- Center Dot -->
+  <circle cx="256" cy="280" r="10" fill="#00f2fe" />
+</svg>

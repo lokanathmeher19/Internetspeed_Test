@@ -1,0 +1,2 @@
+﻿src/app/page.tsx(300,13): error TS2304: Cannot find name 'setIdleJitter'.
+src/app/page.tsx(579,29): error TS2367: This comparison appears to be unintentional because the types '"download" | "upload" | "done" | "ping"' and '"ready"' have no overlap.

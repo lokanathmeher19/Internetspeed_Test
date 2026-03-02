@@ -1,160 +1,120 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface SpeedometerProps {
-    value: number; // Current speed
-    maxValue: number; // Max bound of the gauge (e.g., 100, 1000)
+    value: number;
+    maxValue: number;
     phase: 'idle' | 'ping' | 'download' | 'upload' | 'done';
 }
 
 const Speedometer: React.FC<SpeedometerProps> = ({ value, maxValue, phase }) => {
+    const [animatedValue, setAnimatedValue] = useState(0);
+
+    useEffect(() => {
+        setAnimatedValue(value);
+    }, [value]);
+
+    const percentage = Math.min(Math.max(animatedValue / maxValue, 0), 1);
+    const strokeWidth = 16;
     const radius = 100;
-    const strokeWidth = 12;
-    const center = { x: 120, y: 120 };
+    const center = { x: 125, y: 125 };
 
-    // Calculate gauge angle logic
-    // The gauge will go from -120deg to +120deg.
-    // 0 is -120, max is +120
+    const sweepAngle = 240;
+    const startAngle = 150;
 
-    const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
-
-    // Calculate stroke dash array for the SVG circle (circumference)
+    const arcLength = 2 * Math.PI * radius * (sweepAngle / 360);
     const circumference = 2 * Math.PI * radius;
-    // We only want an arc, let's say 240 degrees (4/3 PI)
-    const arcLength = (240 / 360) * circumference;
-
-    const percentage = clamp(value / maxValue, 0, 1);
-    const strokeDashoffset = arcLength - (percentage * arcLength);
-
-    // Map phase to color
-    const getColor = () => {
-        if (phase === 'download') return 'var(--accent-cyan)';
-        if (phase === 'upload') return 'var(--accent-purple)';
-        if (phase === 'ping') return 'var(--accent-ping)';
-        return 'var(--text-muted)';
-    };
-
-    const activeColor = getColor();
-
-    // Draw ticks
-    const ticks = useMemo(() => {
-        const list = [];
-        for (let i = 0; i <= 10; i++) {
-            // -120 to +120 degrees
-            const angle = -120 + (240 / 10) * i;
-            const rad = (angle - 90) * (Math.PI / 180);
-
-            const innerRadius = radius - 15;
-            const outerRadius = radius - 5;
-
-            const x1 = center.x + innerRadius * Math.cos(rad);
-            const y1 = center.y + innerRadius * Math.sin(rad);
-            const x2 = center.x + outerRadius * Math.cos(rad);
-            const y2 = center.y + outerRadius * Math.sin(rad);
-
-            let tickVal = Math.round((maxValue / 10) * i);
-            // Position for text label
-            const textRadius = radius - 35;
-            const tx = center.x + textRadius * Math.cos(rad);
-            const ty = center.y + textRadius * Math.sin(rad) + 4; // micro adjust Y
-
-            list.push({ x1, y1, x2, y2, tx, ty, val: i % 2 === 0 ? tickVal : null });
-        }
-        return list;
-    }, [maxValue, center.x, center.y, radius]);
-
-    // Pointer calculate
-    const pointerAngle = -120 + (percentage * 240);
-    const pointerRad = (pointerAngle - 90) * (Math.PI / 180);
-
-    const pointerLen = radius - 20;
-    const pX = center.x + pointerLen * Math.cos(pointerRad);
-    const pY = center.y + pointerLen * Math.sin(pointerRad);
+    const strokeDashoffset = arcLength - (arcLength * percentage);
 
     return (
-        <div style={{ position: 'relative', width: 240, height: 240, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <svg width="240" height="240" viewBox="0 0 240 240" className="gauge-svg">
+        <div style={{ position: 'relative', width: 250, height: 250, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+
+            <svg width="250" height="250" viewBox="0 0 250 250" style={{ position: 'absolute' }}>
                 <defs>
-                    <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor={activeColor} stopOpacity="0.8" />
-                        <stop offset="100%" stopColor={activeColor} stopOpacity="0.2" />
+                    <linearGradient id="trackGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="var(--accent-blue)" />
+                        <stop offset="50%" stopColor="var(--accent-cyan)" />
+                        <stop offset="100%" stopColor="var(--accent-green)" />
                     </linearGradient>
-                    <filter id="neon-glow" x="-20%" y="-20%" width="140%" height="140%">
-                        <feGaussianBlur stdDeviation="4" result="blur" />
-                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                    <filter id="thumbShadow">
+                        <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="var(--accent-green)" floodOpacity="0.5" />
                     </filter>
                 </defs>
 
-                {/* Background Arc */}
+                {/* Background track fill (faint) */}
                 <circle
                     cx={center.x}
                     cy={center.y}
                     r={radius}
                     fill="none"
-                    stroke="rgba(255,255,255,0.05)"
+                    stroke="var(--neumorphic-dark)"
                     strokeWidth={strokeWidth}
                     strokeDasharray={`${arcLength} ${circumference}`}
-                    transform={`rotate(150 ${center.x} ${center.y})`}
                     strokeLinecap="round"
+                    transform={`rotate(${startAngle} ${center.x} ${center.y})`}
                 />
 
-                {/* Active Arc */}
+                {/* Thick active gradient arc */}
                 <circle
                     cx={center.x}
                     cy={center.y}
                     r={radius}
                     fill="none"
-                    stroke={activeColor}
+                    stroke="url(#trackGrad)"
                     strokeWidth={strokeWidth}
                     strokeDasharray={`${arcLength} ${circumference}`}
                     strokeDashoffset={strokeDashoffset}
-                    transform={`rotate(150 ${center.x} ${center.y})`}
                     strokeLinecap="round"
-                    filter="url(#neon-glow)"
+                    transform={`rotate(${startAngle} ${center.x} ${center.y})`}
+                    style={{ transition: 'stroke-dashoffset 0.3s ease-out' }}
                 />
 
-                {/* Dynamic Ticks */}
-                {ticks.map((tick, i) => (
-                    <g key={i}>
-                        <line
-                            x1={tick.x1} y1={tick.y1}
-                            x2={tick.x2} y2={tick.y2}
-                            stroke={percentage * 10 >= i ? activeColor : "rgba(255,255,255,0.15)"}
-                            strokeWidth="2"
-                        />
-                        {tick.val !== null && (
-                            <text x={tick.tx} y={tick.ty} fill="var(--text-muted)" fontSize="10" textAnchor="middle" fontWeight="600">
-                                {tick.val >= 1000 ? (tick.val / 1000).toFixed(1) + 'G' : tick.val}
-                            </text>
-                        )}
-                    </g>
-                ))}
+                {/* Segment separating lines to replicate the design ticks */}
+                {[0, 1, 2, 3, 4, 5].map((i) => {
+                    const angle = startAngle + (sweepAngle / 5) * i;
+                    return (
+                        <g key={i} transform={`rotate(${angle} ${center.x} ${center.y})`}>
+                            <line x1={center.x + radius - strokeWidth / 2} y1={center.y} x2={center.x + radius + strokeWidth / 2} y2={center.y} stroke="var(--bg-color)" strokeWidth="4" />
+                        </g>
+                    );
+                })}
 
-                {/* Needle */}
-                <line
-                    x1={center.x} y1={center.y}
-                    x2={pX} y2={pY}
-                    stroke={activeColor}
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    filter="url(#neon-glow)"
-                    style={{ transition: 'x2 0.1s linear, y2 0.1s linear, stroke 0.3s ease' }}
-                />
-                {/* Center dot */}
-                <circle cx={center.x} cy={center.y} r="8" fill="var(--bg-dark)" stroke={activeColor} strokeWidth="3" />
+                {/* Thumb Indicator */}
+                <g
+                    transform={`rotate(${startAngle + (sweepAngle * percentage)} ${center.x} ${center.y})`}
+                    style={{ transition: 'transform 0.3s ease-out' }}
+                >
+                    <circle
+                        cx={center.x + radius}
+                        cy={center.y}
+                        r={strokeWidth * 0.6}
+                        fill="#ffffff"
+                        filter="url(#thumbShadow)"
+                    />
+                </g>
+
+                {/* Bottom scale text "0" and "100+" */}
+                <text x={center.x - radius * 0.8} y={center.y + radius * 0.6} fill="var(--text-main)" fontSize="12" fontWeight="600" textAnchor="end">0</text>
+                <text x={center.x + radius * 0.8} y={center.y + radius * 0.6} fill="var(--text-main)" fontSize="12" fontWeight="600" textAnchor="start">100+</text>
             </svg>
 
-            {/* Absolute center text overlay for the current big number if needed, 
-          though user prompt has real-time values below tachometer, we can put it inside */}
-            <div style={{ position: 'absolute', bottom: '30px', textAlign: 'center', width: '100%' }}>
-                <div style={{ fontSize: '2rem', fontWeight: 300, color: activeColor, textShadow: `0 0 10px ${activeColor}`, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
-                    {value.toFixed(1)}
-                </div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '4px' }}>
-                    {phase === 'ping' ? 'ms' : 'Mbps'}
-                </div>
+            {/* Inner White Neumorphic Circle */}
+            <div style={{
+                width: 155, height: 155, borderRadius: '50%',
+                background: 'var(--bg-color)',
+                boxShadow: '10px 10px 20px var(--neumorphic-dark), -10px -10px 20px var(--neumorphic-light)',
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center', zIndex: 10
+            }}>
+                <span style={{ fontSize: '3.2rem', fontWeight: 700, fontFamily: 'var(--font-h)', color: 'var(--text-main)', lineHeight: 1.1, letterSpacing: '-1px' }}>
+                    {value > 0 ? value.toFixed(1) : '—'}
+                </span>
+                <span style={{ fontSize: '1.2rem', color: 'var(--text-main)', fontWeight: 500, margin: '2px 0 6px 0' }}>mbps</span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.5px' }}>
+                    {phase === 'done' ? 'Complete' : phase !== 'idle' ? phase : 'Ready'}
+                </span>
             </div>
         </div>
     );
-};
+}; 
 
-export default Speedometer;
+export default Speedometer; 

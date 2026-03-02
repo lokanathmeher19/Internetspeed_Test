@@ -14,7 +14,7 @@ interface LiveChartProps {
 const LiveChart: React.FC<LiveChartProps> = ({ data, color }) => {
     if (!data || data.length === 0) {
         return (
-            <div style={{ height: 120, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid var(--panel-border)', borderTop: '1px solid var(--panel-border)', background: 'rgba(255,255,255,0.02)' }}>
+            <div style={{ height: 120, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid var(--panel-border)', borderTop: '1px solid var(--panel-border)', background: 'transparent' }}>
                 <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', opacity: 0.5 }}>AWAITING TELEMETRY</span>
             </div>
         );

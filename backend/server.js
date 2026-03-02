@@ -1,14 +1,30 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const port = process.env.PORT || 8080;
 
+// Enterprise Security Headers
+app.use(helmet());
+
+// Cross-Origin Settings
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'OPTIONS'],
 }));
+
+// DDoS & Abuse Mitigation Rate Limiting (100 requests per minute per IP)
+const limiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 1000,
+    message: 'Too many requests from this IP, please try again after a minute',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+app.use(limiter);
 
 // Middleware to prevent caching
 app.use((req, res, next) => {
